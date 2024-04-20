@@ -7,6 +7,7 @@ const app = express();
 const axios = require('axios');
 
 app.listen(portNumber);
+app.use(express.static(__dirname + '/public'));
 
 const API_KEY = "e8f985a6-1a6d-4e12-88d2-e751f9a7a246"
 

@@ -1,8 +1,7 @@
 
 body {
     height: 100vh;
-    background-color: #007A33;
-    border: 0.5rem solid #BA9653;
+    border: 1rem solid white;
     border-radius: 10px;
 }
 div.container {
@@ -30,5 +29,5 @@ div.container {
     padding-block: 1vh;
     display: block;
     text-align: center;
-    background-color: #BA9653;
+    background-color: #0d6efd;
 }
