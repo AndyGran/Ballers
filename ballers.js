@@ -6,12 +6,18 @@ const fs = require("fs");
 const app = express();
 const axios = require('axios');
 const Chart = require('chart.js/auto');
+require("dotenv").config({ path: path.resolve(__dirname, 'credentialsDontPost/.env') })
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 app.listen(portNumber);
 app.use(express.static(__dirname + '/public'));
 app.use(express.static(__dirname + '/node_modules'));
 
 const API_KEY = "e8f985a6-1a6d-4e12-88d2-e751f9a7a246"
+
+const uri = process.env.MONGO_CONNECTION_STRING;
+
+const databaseAndCollection = {db: process.env.MONGO_DB_NAME, collection: process.env.MONGO_COLLECTION};
 
 // const url = 'https://api.balldontlie.io/v1/teams';
 
@@ -76,15 +82,55 @@ app.get("/compare", async (request, response) => {
 
 
  async function getPlayers(first_name, last_name){
-  //let p1 = document.querySelector("#player1").value
-
-  let id = await playerID(first_name,last_name)
+  lookUpOneEntry(first_name,last_name)
+        .then(result => {
+            id = result.id;
+        })
+        .catch(error => {
+          id = playerID(first_name,last_name);
+          insert(first_name,last_name,id)
+        });
   let player_stats = await playerStats(id)
   const total_games = Array.from({ length: player_stats.length }, (_, index) => index + 1);
   return [total_games, player_stats]
  };
 
+ async function insert(first_name, last_name, id) {
+  const client = new MongoClient(uri, {serverApi: ServerApiVersion.v1 });
+  try {
+      await client.connect();
+      let player = {first_name: first_name, last_name: last_name, id: id};
+      await client.db(databaseAndCollection.db).collection(databaseAndCollection.collection).insertOne(player);
+  }
+  catch (e) {
+      console.error(e);
+  } finally {
+      await client.close();
+  }
+}
 
+async function lookUpOneEntry(first_name,last_name) {
+  const promise = new Promise(async (resolve, reject) => {
+      const client = new MongoClient(uri, { serverApi: ServerApiVersion.v1 });
+      try {
+          await client.connect();
+          let filter = {first_name: first_name, last_name: last_name};
+          const result = await client.db(databaseAndCollection.db)
+                          .collection(databaseAndCollection.collection)
+                          .findOne(filter);
+          if (result) {
+              resolve(result);
+          } else {
+              reject(new Error("No matching records found"));
+          }
+      } catch (error) {
+          reject(error);
+      } finally {
+          client.close();
+      }
+  }, 0);
+  return promise;
+}
 
   //let p2 = document.querySelector("#player2").value
 
