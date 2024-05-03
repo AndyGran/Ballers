@@ -81,19 +81,19 @@ app.get("/compare", async (request, response) => {
 })
 
 
- async function getPlayers(first_name, last_name){
-  lookUpOneEntry(first_name,last_name)
-        .then(result => {
-            id = result.id;
-        })
-        .catch(error => {
-          id = playerID(first_name,last_name);
-          insert(first_name,last_name,id)
-        });
-  let player_stats = await playerStats(id)
+async function getPlayers(first_name, last_name) {
+  let id;
+  try {
+    const result = await lookUpOneEntry(first_name, last_name);
+    id = result.id;
+  } catch (error) {
+    id = await playerID(first_name, last_name);
+    await insert(first_name, last_name, id);
+  }
+  let player_stats = await playerStats(id);
   const total_games = Array.from({ length: player_stats.length }, (_, index) => index + 1);
-  return [total_games, player_stats]
- };
+  return [total_games, player_stats];
+};
 
  async function insert(first_name, last_name, id) {
   const client = new MongoClient(uri, {serverApi: ServerApiVersion.v1 });
